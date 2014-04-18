@@ -29,7 +29,7 @@ nodo *insertar_nodo_en_nivel(nodo **nivel, char c);
 void trie_agregar_palabra(trie *t, char *p);
 trie *trie_construir(char *nombre_archivo);
 void trie_imprimir(trie *t, char *nombre_archivo);
-
+void print_listap(listaP* lista);
 
 /* Funciones Avanzadas */
 bool buscar_palabra(trie *t, char *p);

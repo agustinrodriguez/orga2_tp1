@@ -21,10 +21,11 @@ int main(void) {
 	// printf("Esta cazadora? %s", esta_string);
 
 	// printf("peso palabra aaa %f", peso_palabra("aaa"));
-	double peso_trie = trie_pesar(mi_trie, &peso_palabra);
-	printf("trie pesar %f", peso_trie);
+	// double peso_trie = trie_pesar(mi_trie, &peso_palabra);
+	// printf("trie pesar %f", peso_trie);
 
-	listaP* prediccion = predecir_palabras(mi_trie, "2");
+	listaP* prediccion = predecir_palabras(mi_trie, "22");
+	print_listap(prediccion);
 
 	lista_borrar(prediccion);
 	trie_borrar(mi_trie);

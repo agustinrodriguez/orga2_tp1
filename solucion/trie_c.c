@@ -3,42 +3,21 @@
 
 // Completar las funciones en C.
 
-listaP *predecir_palabras(trie *t, char *teclas) {
-	listaP * prediccion = lista_crear();
-	/*listaP * combinaciones = lista_crear();
-	int len_teclas = strlen(teclas);
-	int i = 0;
-
-	while (i < len_teclas) {
-		agregar_combinaciones(combinaciones, caracteres_de_tecla(teclas[i]));
-		i++;
-	}
-
-	lsnodo * nodo_combinacion = combinaciones->prim;
-
-	while (nodo_combinacion != 0) {
-		lista_concatenar(prediccion, palabras_con_prefijo(t, nodo_combinacion->valor));
-		nodo_combinacion = nodo_combinacion->sig;
-	}
-
-	lista_borrar(combinaciones);*/
-
-	return prediccion;
-}
-
-/*listaP *concatenar_combinacion(char *valor, char *caracteres) {
+listaP *concatenar_combinacion(char *valor, char *caracteres) {
 	listaP * lista = lista_crear();
 
 	int len_caracteres = strlen(caracteres);
+	int len_valor = strlen(valor);
 	int i = 0;
-	char palabra[1024];
+	char palabra[len_valor + 2];
 
 	while(i < len_caracteres) {
 		strcpy(palabra, valor);
-		strcat(palabra, caracteres[i]);
+		palabra[len_valor] = caracteres[i];
+		palabra[len_valor + 1] = 0;
 		lista_agregar(lista, palabra);
 		i++;
-	}	
+	}
 
 	return lista;
 }
@@ -46,21 +25,22 @@ listaP *predecir_palabras(trie *t, char *teclas) {
 void crear_primeras_combinaciones(listaP* lista, char * caracteres) {
 	int len_caracteres = strlen(caracteres);
 	int i = 0;
-	char palabra[1024];
+	char palabra[2];
 
 	while(i < len_caracteres) {
 		palabra[0] = caracteres[i];
+		palabra[1] = 0;
 		lista_agregar(lista, palabra);
 		i++;
 	}
 }
 
-void agregar_combinaciones(listaP* combinaciones, char* caracteres) {
+listaP *agregar_combinaciones(listaP* combinaciones, char* caracteres) {
 	lsnodo * nodo_lista = combinaciones->prim;
 	if (nodo_lista == 0) {
 		crear_primeras_combinaciones(combinaciones, caracteres);
 	} else {
-		listaP* nuevas_combinaciones = lista_crear;
+		listaP* nuevas_combinaciones = lista_crear();
 		while (nodo_lista != 0) {
 			lista_concatenar(nuevas_combinaciones, concatenar_combinacion(nodo_lista->valor, caracteres));
 			nodo_lista = nodo_lista->sig;
@@ -69,7 +49,41 @@ void agregar_combinaciones(listaP* combinaciones, char* caracteres) {
 		combinaciones = nuevas_combinaciones;
 	}
 
-}*/
+	return combinaciones;
+}
+
+void print_listap(listaP* lista) {
+	lsnodo * nodo_lista = lista->prim;
+
+	while (nodo_lista != 0) {
+		printf("%s ", nodo_lista->valor);
+		nodo_lista = nodo_lista->sig;
+	}
+}
+
+listaP *predecir_palabras(trie *t, char *teclas) {
+	listaP * prediccion = lista_crear();
+	listaP * combinaciones = lista_crear();
+	int len_teclas = strlen(teclas);
+	int i = 0;
+
+	while (i < len_teclas) {
+		combinaciones = agregar_combinaciones(combinaciones, caracteres_de_tecla(teclas[i]));
+		i++;
+	}
+
+	// print_listap(combinaciones);
+	lsnodo * nodo_combinacion = combinaciones->prim;
+
+	while (nodo_combinacion != 0) {
+		lista_concatenar(prediccion, palabras_con_prefijo(t, nodo_combinacion->valor));
+		nodo_combinacion = nodo_combinacion->sig;
+	}
+
+	lista_borrar(combinaciones);
+
+	return prediccion;
+}
 
 double peso_palabra(char *palabra) {
 	int length = strlen(palabra);
