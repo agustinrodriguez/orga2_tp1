@@ -23,6 +23,7 @@ global trie_imprimir
 global buscar_palabra
 global palabras_con_prefijo
 global trie_pesar
+global pesar_listap
 
 extern lista_crear
 extern lista_agregar
@@ -555,17 +556,29 @@ nodo_prefijo: ; RDI -> *nodo_nivel, RSI-> char * prefijo
 	mov byte R10b, [R9] ; R10b = primer_char(*prefijo)
 	mov R11, NULL ; R11 = nodo_prefijo = NULL
 
+	cmp byte [R8 + offset_c], R10b ; if (nodo_nivel.c != c) devolver nodo null
+	jne .devolver_nodo_null
+	mov R11, R8 ; nodo_prefijo = nodo_nivel
+	mov R8, [R8 + offset_hijos] ; avanzo por hijos 
+	lea R9, [R9 + 1] ; avanzo string
+	mov byte R10b, [R9] ; R10b = siguiente_char(prefijo)
+	cmp R10b, 0 ; if (fin_string) devolver_nodo
+	je .devolver_nodo
+
 	.ciclo:
 		cmp R10b, 0 ; if (fin_string) devolver_nodo
 		je .devolver_nodo
 		cmp R8, NULL ; if (nodo_nivel == NULL) devolver nodo null
 		je .devolver_nodo_null
 		cmp byte [R8 + offset_c], R10b ; if (nodo_nivel.c != c) devolver nodo null
-		jne .devolver_nodo_null
+		jne .avanzar_siguiente
 		mov R11, R8 ; nodo_prefijo = nodo_nivel
 		mov R8, [R8 + offset_hijos] ; avanzo por hijos 
 		lea R9, [R9 + 1] ; avanzo string
 		mov byte R10b, [R9] ; R10b = siguiente_char(prefijo)
+		jmp .ciclo
+		.avanzar_siguiente:
+		mov R8, [R8 + offset_sig] ; avanzo por siguiente
 		jmp .ciclo
 
 	.devolver_nodo_null:
@@ -575,15 +588,29 @@ nodo_prefijo: ; RDI -> *nodo_nivel, RSI-> char * prefijo
 	ret
 	; c = primer_char(prefijo)
 	; nodo_prefijo = null
-	; while (n != null && c != 0) {
-	; 	if (n.c == c) {
-	;		nodo_prefijo = n
-	; 		n = n.hijos
-	; 		c = siguiente_char(prefijo) 
-	; 	} else {
-	;		nodo_prefijo = null
-	;		n = null
-	;	}
+	;
+	; if (n.c == c) {
+	;	nodo_prefijo = n
+	;	n = n.hijos
+	; 	c = siguiente_char(prefijo);	
+	;	if (c != 0) {
+	; 		while (n != null && c != 0) {
+	; 			if (n.c == c) {
+	;				nodo_prefijo = n
+	; 				n = n.hijos
+	; 				c = siguiente_char(prefijo) 
+	; 			} else {
+	;				if (n.sig != 0) {
+	;					n = n.sig	
+	;				} else {
+	;					nodo_prefijo = null
+	;					n = null
+	;				}
+	;			}
+	; 		}
+	; 	}
+	; } else {
+	;	nodo_prefijo = null	
 	; }
 	; 
 	; return nodo_prefijo
