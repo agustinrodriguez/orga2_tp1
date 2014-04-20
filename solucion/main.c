@@ -21,12 +21,18 @@ int main(void) {
 	// printf("Esta cazadora? %s", esta_string);
 
 	// double peso_trie = trie_pesar(mi_trie, &peso_palabra);
-	// printf("\ntrie pesar %f", peso_trie);
+	// printf("trie pesar %f", peso_trie);
+	// printf("\npeso palabra abcd %f", peso_palabra("come"));
+
 	listaP* lista_para_pesar = lista_crear();
 	lista_agregar(lista_para_pesar, "a");
-	lista_agregar(lista_para_pesar, "z");
+	lista_agregar(lista_para_pesar, "ala");
+	lista_agregar(lista_para_pesar, "caza");
+	lista_agregar(lista_para_pesar, "cazador");
+	lista_agregar(lista_para_pesar, "comida");
+	lista_agregar(lista_para_pesar, "come");
 	double peso_lista = pesar_listap(lista_para_pesar, &peso_palabra);
-	printf("pesar_listap %f", peso_lista);
+	printf("\npesar_listap %f", peso_lista);
 
 	// listaP* prediccion = predecir_palabras(mi_trie, "22");
 	// print_listap(prediccion);

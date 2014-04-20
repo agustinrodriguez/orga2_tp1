@@ -411,14 +411,13 @@ trie_pesar: ; RDI-> trie * t, RSI -> funcion pesar_palabra
 		mov RDI, R15 ; primer parametro la lista *ls
 		mov RSI, R13 ; la funcion pesar palabra 
 		call pesar_listap
-		movq R13, XMM0 ; guardo en R13 el resultado
 		jmp .fin
 	.devolver_cero:
 		xor R13, R13
+		cvtsi2sd XMM0, R13
 	.fin:
 		mov RDI, R15 ; borro la lista que ya no necesito
 		call lista_borrar
-		cvtsi2sd XMM0, R13
 
 	pop R15
 	pop R14
@@ -784,6 +783,7 @@ pesar_listap: ; RDI -> listaP* ls, RSI -> funcion pesar
 
 	xor R15, R15 ; R15 = n = 0
 	xor R14, R14 ; R14 = suma = 0
+	cvtsi2sd XMM2, R14 ; convierto de entero a double
 
 	.ciclo:
 		cmp R12, NULL ; if (nodols = null) devolver promedio 
@@ -791,21 +791,20 @@ pesar_listap: ; RDI -> listaP* ls, RSI -> funcion pesar
 		; calculo el peso de la palabra
 		mov RDI, [R12 + offset_valor]
 		call R13 ; XMM0 = peso_palabra(nodols.valor)
-		cvtsi2sd XMM1, R14 ; convierto de entero a double la suma
-		addsd XMM1, XMM0 ; sumo peso suma += peso_palabra(nodols.valor)
-		movq R14, XMM1 ; guardo la suma en R14
+		addsd XMM2, XMM0 ; sumo peso suma += peso_palabra(nodols.valor)
 		add R15D, 1 ; sumo 1 a n que es la cantidad de elementos
 
 		mov R12, [R12 + offset_sig_lnodo] ; avanzo la lista
 		jmp .ciclo
 
 	.devolver_promedio:
-		cvtsi2sd XMM0, R14 ; convierto de entero a double la suma
+		movdqa XMM0, XMM2 ; pongo la suma en XMM0
+		;cvtsi2sd XMM0, R14 ; convierto de entero a double la suma
 		cvtsi2sd XMM1, R15 ; convierto de entero a double n
 		divsd XMM0, XMM1 ; divido suma por n ; resultado queda en XMM0
 		jmp .fin 
 	.devolver_cero:
-		mov RAX, 0
+		xor RAX, RAX
 		cvtsi2sd XMM0, RAX ; convierto de entero a double
 	.fin:
 	pop R15

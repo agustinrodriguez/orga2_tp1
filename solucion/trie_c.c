@@ -89,17 +89,18 @@ double peso_palabra(char *palabra) {
 	int length = strlen(palabra);
 	int suma = 0;
 	int n = 0;
+	double resultado = 0;
 
 	while (n < length) {
 		suma += (int) palabra[n];
 		n++;
 	}
 
-	if (n == 0) {
-		return 0;
-	} else {
-		return suma / n;
+	if (n != 0) {
+		resultado = (double)suma/n;
 	}
+
+	return resultado;
 }
 
 char* caracteres_de_tecla(char tecla) {
