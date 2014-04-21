@@ -31,9 +31,6 @@ extern lista_borrar
 extern lista_concatenar
 extern malloc
 extern free
-extern strlen
-extern strcpy
-extern strcat
 extern fopen
 extern fclose
 extern fprintf
@@ -43,10 +40,9 @@ extern fscanf
 %define offset_sig 0
 %define offset_hijos 8
 %define offset_c 16
-%define offset_c_null 17
-%define offset_fin 18
+%define offset_fin 17
 
-%define size_nodo 19
+%define size_nodo 18
 
 %define offset_raiz 0
 
@@ -126,8 +122,7 @@ nodo_crear: ; RDI -> char c
 	call malloc ; creo un puntero a nodo, RAX = &nodo
 	mov qword [RAX + offset_sig], NULL ; nodo.sig = NULL
 	mov qword [RAX + offset_hijos], NULL ; nodo.hijos = NULL
-	mov [RAX + offset_c], R12b ; nodo.c = R12b
-	mov byte [RAX + offset_c_null], NULL ; agrego un NULL a la posicion que le sigue al caracter, para indicar el fin de cadena
+	mov [RAX + offset_c], R12B ; nodo.c = R12b
 	mov byte [RAX + offset_fin], FALSE ; nodo.fin = false
 
 	add RSP, 8
@@ -275,12 +270,18 @@ trie_imprimir: ; RDI -> *trie, RSI -> *char nombre_archivo
 	push R13
 	push R14
 	push R15
+	push RBX
+	sub RSP, 8
 
 	mov R12, RDI ; R12 = *trie
 	mov RDI, RSI ; asigno primer parametro del fopen, que es el nombre del archivo
 	mov RSI, modo_apertura ; asigno segundo parametro; modo de apertura append
 	call fopen
 	mov R13, RAX ; R13 = *fp pongo en R13 el puntero al archivo
+
+	mov RDI, 2 ; malloc de 2 posiciones para crear la palabra de 1 caracter
+	call malloc ; RAX = char * palabra_1_char
+	mov RBX, RAX ; RBX = RAX = char * palabra_1_char
 
 	; armo listaP de palabras del trie para imprimir
 	call lista_crear
@@ -294,8 +295,12 @@ trie_imprimir: ; RDI -> *trie, RSI -> *char nombre_archivo
 		cmp R14, NULL ; if (nodo_nivel == null) fin
 		je .imprimir_palabras
 
+		mov R8B, [R14 + offset_c] ; R8B = char c
+		mov byte [RBX], R8B ; primer letra asigno el char
+		mov byte [RBX + 1], NULL ; segunda letra asgino el char nulo
+
 		mov RDI, R12 ; primer parametro trie
-		lea RSI, [R14 + offset_c] ; en el segundo parametro pongo la direccion al char c, como prefijo de una letra
+		mov RSI, RBX ; en el segundo parametro pongo la direccion al char c, como prefijo de una letra
 		call palabras_con_prefijo ; RAX = palabras_con_prefijo(t, nodo_nivel.c)
 
 		mov RDI, R15 ; primer parametro *ls (la lista final)
@@ -319,6 +324,10 @@ trie_imprimir: ; RDI -> *trie, RSI -> *char nombre_archivo
 		call fclose
 		mov RDI, R15 ; borro la lista que ya no necesito
 		call lista_borrar
+		mov RDI, RBX ; borro el string creado
+		call free
+	add RSP, 8
+	pop RBX
 	pop R15
 	pop R14
 	pop R13
@@ -342,8 +351,8 @@ buscar_palabra: ; RDI-> trie* t, RSI -> char* palabra
 	mov R14, [RAX + offset_prim] ; R14 = lista.prim
 
 	mov RDI, R13 ; calculo el length de la palabra del parametro
-	call strlen
-	mov R15, RAX ; R15 = strlen(palabra)
+	call longitud_palabra
+	mov R15, RAX ; R15 = longitud_palabra(palabra)
 
 	; si algunas de las palabras_con_prefijo tiene la misma cantidad de letras
 	; que la palabra dada, quiere decir que pertenece al trie
@@ -351,7 +360,7 @@ buscar_palabra: ; RDI-> trie* t, RSI -> char* palabra
 		cmp R14, NULL ; if (nodolista = null) termino de recorrer o es vacia, devuelvo false
 		je .devolver_false
 		mov RDI, [R14 + offset_valor] ; calculo el length de la palabra de la lista
-		call strlen
+		call longitud_palabra
 		cmp R15D, EAX ; comparo si la longitud es igual, es la misma palabra, devuelvo true
 		je .devolver_true
 		mov R14, [R14 + offset_sig_lnodo] ; sino avanzo la lista
@@ -381,9 +390,15 @@ trie_pesar: ; RDI-> trie * t, RSI -> funcion pesar_palabra
 	push R13
 	push R14
 	push R15
+	push RBX
+	sub RSP, 8
 
 	mov R12, RDI ; R12 = trie* t
 	mov R13, RSI ; R13 = funcion pesar
+
+	mov RDI, 2 ; malloc de 2 posiciones para crear la palabra de 1 caracter
+	call malloc ; RAX = char * palabra_1_char
+	mov RBX, RAX ; RBX = RAX = char * palabra_1_char
 
 	; armo listaP de palabras del trie para imprimir
 	call lista_crear
@@ -397,8 +412,12 @@ trie_pesar: ; RDI-> trie * t, RSI -> funcion pesar_palabra
 		cmp R14, NULL ; if (nodo_nivel == null) fin
 		je .pesar
 
+		mov R8B, [R14 + offset_c] ; R8B = char c
+		mov byte [RBX], R8B ; primer letra asigno el char
+		mov byte [RBX + 1], NULL ; segunda letra asgino el char nulo
+
 		mov RDI, R12 ; primer parametro trie
-		lea RSI, [R14 + offset_c] ; en el segundo parametro pongo la direccion al char c, como prefijo de una letra
+		mov RSI, RBX ; en el segundo parametro pongo la direccion al char c, como prefijo de una letra
 		call palabras_con_prefijo ; RAX = palabras_con_prefijo(t, nodo_nivel.c)
 
 		mov RDI, R15 ; primer parametro *ls (la lista final)
@@ -418,7 +437,11 @@ trie_pesar: ; RDI-> trie * t, RSI -> funcion pesar_palabra
 	.fin:
 		mov RDI, R15 ; borro la lista que ya no necesito
 		call lista_borrar
+		mov RDI, RBX ; borro el string creado
+		call free
 
+	add RSP, 8
+	pop RBX
 	pop R15
 	pop R14
 	pop R13
@@ -633,7 +656,7 @@ palabras_de_nodo: ; RDI -> *nodo_nivel, RSI-> char * prefijo
 
 	mov RDI, R14 ; copio el prefijo en R14
 	mov RSI, R15 ; en el segundo parametro pongo el prefijo que quiero copiar
-	call strcpy; strcpy(char *dest, const char *src)
+	call copiar_palabra; copiar_palabra(char *dest, const char *src)
 	; ahora R14 es una copia de prefijo
 
 	call lista_crear ; creo una lista vacia
@@ -643,8 +666,8 @@ palabras_de_nodo: ; RDI -> *nodo_nivel, RSI-> char * prefijo
 		cmp R12, NULL
 		je .fin
 		mov RDI, R14 ; primer parametro char* palabra
-		lea RSI, [R12 + offset_c] ; segundo parametro puntero al caracter que quiero concatenar
-		call strcat ; R14 = palabra = concatenar(palabra, n.c)
+		mov SIL, [R12 + offset_c] ; segundo parametro puntero al caracter que quiero concatenar
+		call concatenar_caracter ; R14 = palabra = concatenar(palabra, n.c)
 		cmp byte [R12 + offset_fin], TRUE ; 	if (!n.fin) seguir buscando la palabra por los hijos
 		jne .concatenar_con_palabras_de_hijos
 		; if (n.fin) agrego la palabra a la lista
@@ -666,7 +689,7 @@ palabras_de_nodo: ; RDI -> *nodo_nivel, RSI-> char * prefijo
 		.avanzar:
 			mov RDI, R14 ; copio el prefijo en R14
 			mov RSI, R15 ; en el segundo parametro pongo el prefijo que quiero copiar
-			call strcpy; strcpy(char *dest, const char *src)
+			call copiar_palabra; copiar_palabra(char *dest, const char *src)
 			; ahora R14 es una copia de prefijo
 			mov R12, [R12 + offset_sig] ; R12 = nodo_nivel.sig
 			jmp .ciclo
@@ -812,4 +835,50 @@ pesar_listap: ; RDI -> listaP* ls, RSI -> funcion pesar
 	pop R13
 	pop R12
 	pop RBP
+	ret
+
+longitud_palabra: ; RDI -> char * palabra
+	mov byte R8B, [RDI] ; R8b primer caracter de palabra
+	xor R9, R9
+
+	.ciclo:
+		cmp R8B, NULL ; si es el caracter nulo, devolver contador
+		je .salir
+		add R9, 1 ; sumo contador
+		mov byte R8B, [RDI + R9] ; avanzo string
+		jmp .ciclo
+
+	.salir:
+	mov RAX, R9
+	ret
+
+copiar_palabra: ; RDI -> char *dest, RSI char *src
+	xor R8, R8 ; R8 = 0
+	mov R9B, [RSI] ; R9B = primera letra de src
+
+	.ciclo:
+		cmp R9B, NULL ; si es caracter nulo, salir
+		je .salir
+		mov byte [RDI + R8], R9B ; pongo en dest carcater de src
+		add R8, 1
+		mov R9B, [RSI + R8] ; avanzo string
+		jmp .ciclo
+
+	.salir:
+		mov byte [RDI + R8], NULL ; pongo el caracter nulo al final del destino
+	ret
+
+concatenar_caracter: ; RDI -> char * palabra, RSI char caracter
+	mov R8B, [RDI] ; R8B = primer letra de palabra
+	xor R9, R9
+	.ciclo:
+		cmp R8B, NULL ; si es el caracter nulo, concatenar el caracter de parametro
+		je .concatenar
+		add R9, 1
+		mov R8B, [RDI + R9] ; avanzo string
+		jmp .ciclo
+
+	.concatenar:
+		mov byte [RDI + R9], SIL ; copio el caracter
+		mov byte [RDI + R9 + 1], NULL ; pongo el caracter nulo al final
 	ret
