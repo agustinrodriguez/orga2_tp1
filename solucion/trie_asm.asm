@@ -821,8 +821,7 @@ pesar_listap: ; RDI -> listaP* ls, RSI -> funcion pesar
 		jmp .ciclo
 
 	.devolver_promedio:
-		movdqa XMM0, XMM2 ; pongo la suma en XMM0
-		;cvtsi2sd XMM0, R14 ; convierto de entero a double la suma
+		movdqu XMM0, XMM2 ; pongo la suma en XMM0
 		cvtsi2sd XMM1, R15 ; convierto de entero a double n
 		divsd XMM0, XMM1 ; divido suma por n ; resultado queda en XMM0
 		jmp .fin 
